@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pillow
+reportlab
+jinja2
+python-multipart
