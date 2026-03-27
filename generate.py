@@ -21,13 +21,13 @@ def main():
         if command == "--clear":
             print("Clearing output directory...")
             result = clear_output_directory()
-            print(f"✓ {result['message']}")
+            print(f" {result['message']}")
             return
         
         elif command == "--clear-gen":
             print("Clearing output directory...")
             clear_result = clear_output_directory()
-            print(f"✓ {clear_result['message']}")
+            print(f" {clear_result['message']}")
             print("\nGenerating certificates...\n")
             generate_certificates()
             return
@@ -51,14 +51,14 @@ def generate_certificates():
         with open(DATA_PATH, "r") as f:
             data = json.load(f)
     except FileNotFoundError:
-        print(f"❌ Error: {DATA_PATH} not found!")
+        print(f" Error: {DATA_PATH} not found!")
         return
     except json.JSONDecodeError:
-        print(f"❌ Error: {DATA_PATH} is not valid JSON!")
+        print(f" Error: {DATA_PATH} is not valid JSON!")
         return
     
     if not data:
-        print("❌ No certificate data found in input.json")
+        print(" No certificate data found in input.json")
         return
     
     print(f"Generating {len(data)} certificate(s)...\n")
@@ -73,14 +73,14 @@ def generate_certificates():
                 "position": entry["position"],
                 "file": path
             })
-            print(f"✓ [{i}/{len(data)}] {entry['name']} ({entry['sport']}) - {path}")
+            print(f" [{i}/{len(data)}] {entry['name']} ({entry['sport']}) - {path}")
         except KeyError as e:
-            print(f"❌ [{i}/{len(data)}] Missing field {e} in entry: {entry.get('name', 'Unknown')}")
+            print(f" [{i}/{len(data)}] Missing field {e} in entry: {entry.get('name', 'Unknown')}")
         except Exception as e:
-            print(f"❌ [{i}/{len(data)}] Error generating certificate for {entry.get('name', 'Unknown')}: {str(e)}")
+            print(f" [{i}/{len(data)}] Error generating certificate for {entry.get('name', 'Unknown')}: {str(e)}")
     
     print(f"\n✓ Successfully generated {len(results)}/{len(data)} certificate(s)")
-    print(f"📁 Generated files are in the 'output/' directory organized by sport")
+    print(f" Generated files are in the 'output/' directory organized by sport")
 
 
 if __name__ == "__main__":
