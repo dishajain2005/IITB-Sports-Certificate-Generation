@@ -275,7 +275,7 @@ That's it! Check the `output/` folder to see your generated PDFs organized by sp
 - Ensure virtual environment is activated: You should see `(venv)` in terminal
 - Reinstall dependencies: `pip install -r requirements.txt`
 
-### Port 8000 already in use
+### Port 8000 already in use (API mode only)
 
 - Stop the current server with `Ctrl+C`
 - Or use a different port: `uvicorn app.main:app --reload --port 8001`
@@ -286,8 +286,11 @@ That's it! Check the `output/` folder to see your generated PDFs organized by sp
 - Ensure template files exist:
   - `templates/certificate_base.png`
   - `templates/GreatVibes-Regular.ttf`
+- For CLI: Run `python generate.py` and check error messages
+- For API: Check server console for error messages
 
 ### No output folder
 
 - The `output/` folder is created automatically when you generate certificates
-- If it doesn't exist or is empty, ensure you called the `/generate` endpoint
+- **Using CLI:** Run `python generate.py` and check the console for progress
+- **Using API:** Ensure you called the `POST /generate` endpoint
