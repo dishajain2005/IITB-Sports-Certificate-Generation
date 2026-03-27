@@ -2,39 +2,224 @@
 
 ## Overview
 
-FastAPI backend for JSON-driven certificate generation matching the Figma design semantics.
+FastAPI backend for generating sports certificates as PDFs from JSON data using Pillow image manipulation.
 
 ## Setup
 
-1. Create and activate Python venv.
-2. `pip install -r requirements.txt`
+### Prerequisites
+
+- Python 3.7 or higher installed on your system
+
+### Step 1: Clone/Navigate to Project
+
+```bash
+cd path/to/IITB\ Sports\ Certificate\ Generation
+```
+
+### Step 2: Create Python Virtual Environment
+
+```bash
+# On Windows (PowerShell)
+python -m venv venv
+
+# On macOS/Linux
+python3 -m venv venv
+```
+
+### Step 3: Activate Virtual Environment
+
+```bash
+# On Windows (PowerShell)
+.\venv\Scripts\Activate.ps1
+
+# On Windows (Command Prompt)
+venv\Scripts\activate.bat
+
+# On macOS/Linux
+source venv/bin/activate
+```
+
+You should see `(venv)` prefix in your terminal after activation.
+
+### Step 4: Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+This installs:
+
+- FastAPI
+- Uvicorn
+- Pillow
+- ReportLab
+- Jinja2
+- Python-multipart
 
 ## Run server
 
-`uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+### Step 5: Start the FastAPI Development Server
 
-## API
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-- GET `/` : health check
-- GET `/api/v1/certificates` : all certificates (API-ready design map)
-- GET `/api/v1/certificates/{cert_id}` : specific item
-- GET `/api/v1/certificates/{cert_id}/ui-mapping` : per-component UI mapping for front-end
-- POST `/api/v1/certificates/{cert_id}/generate` : generate JSON + PNG artifact
-- GET `/api/v1/certificates/{cert_id}/artifact` : download generated PNG
+You should see output like:
 
-## Data flow
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000
+INFO:     Application startup complete
+```
 
-1. JSON source: `data/sample_certificates.json`
-2. Load as `CertificateRaw` objects in `app/data_loader.py`
-3. Transform to API-ready model `CertificateAPIVersion` in `app/data_loader.py`:
-   - includes headline, body, metadata, per-component style hints
-4. Endpoint serve from `app/main.py`
-5. Artifact generation in `/generate` uses Pillow image builder
+The API is now running on `http://localhost:8000`
 
-## Frontend plug-in
+### Step 6: Stop the Server
 
-Frontend can call:
+Press `Ctrl+C` in the terminal to stop the server.
 
-- `/api/v1/certificates` for list screen
-- `/api/v1/certificates/{id}/ui-mapping` to render title/body/sign fields like Figma
-- use generated image URL `/api/v1/certificates/{id}/artifact` as preview
+### Step 7: Deactivate Virtual Environment (when done)
+
+```bash
+deactivate
+```
+
+## API Endpoints
+
+- `GET /` - Health check
+- `GET /certificates` - Retrieve all certificates from data source
+- `POST /generate` - Generate PDF certificates for all entries in organized folder structure
+- `DELETE /clear` - Clear all generated certificates and reset the output directory
+
+## Using the API
+
+### Method 1: Using Browser (for GET requests)
+
+1. Health check: Visit `http://localhost:8000/` in your browser
+2. View certificates: Visit `http://localhost:8000/certificates` to see your data
+
+### Method 2: Using cURL (Command Line)
+
+**View certificates:**
+
+```bash
+curl http://localhost:8000/certificates
+```
+
+**Generate certificates:**
+
+```bash
+curl -X POST http://localhost:8000/generate
+```
+
+**Clear all certificates:**
+
+```bash
+curl -X DELETE http://localhost:8000/clear
+```
+
+### Method 3: Using REST Client (Recommended for Testing)
+
+Install a REST client like Postman, Insomnia, or use VS Code REST Client extension, then:
+
+1. **GET** `http://localhost:8000/` → Health check
+2. **GET** `http://localhost:8000/certificates` → View data
+3. **POST** `http://localhost:8000/generate` → Generate certificates
+4. **DELETE** `http://localhost:8000/clear` → Clear outputs
+
+## Data format
+
+Input data format (`data/input.json`):
+
+```json
+[
+  {
+    "name": "John Doe",
+    "position": "Captain",
+    "sport": "Football",
+    "date": "March 2026"
+  }
+]
+```
+
+## Certificate generation
+
+- Uses `templates/certificate_base.png` as template
+- Applies custom font `templates/GreatVibes-Regular.ttf`
+- Handles name truncation for long names (max 20 characters for display)
+- Output structure: organized by sport in separate folders
+  - Example: `output/Basketball/`, `output/Swimming/`, `output/Weightlifting/`
+- File naming format: `name_sport_position.pdf`
+  - Example: `Disha_Jain_Basketball_first.pdf`
+- Fields positioned on template:
+  - Name: (355, 260)
+  - Position: (80, 290)
+  - Sport: (420, 290)
+  - Date: (240, 320)
+
+## Workflow
+
+1. Add certificate data to `data/input.json`
+2. Call `POST /generate` to create certificates organized by sport
+3. Certificates are saved in `output/[Sport]/name_sport_position.pdf`
+4. Call `DELETE /clear` to remove all generated certificates and start fresh
+
+## Complete Example Workflow
+
+1. **Prepare data:**
+   - Edit `data/input.json` with certificate information
+
+2. **Start server:**
+
+   ```bash
+   # Terminal 1
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+3. **Check data:**
+
+   ```bash
+   # Terminal 2 (new terminal, keep first one running)
+   curl http://localhost:8000/certificates
+   ```
+
+4. **Generate certificates:**
+
+   ```bash
+   curl -X POST http://localhost:8000/generate
+   ```
+
+5. **Find generated files:**
+   - Navigate to `output/` folder
+   - Check subdirectories like `Basketball/`, `Swimming/`, etc.
+   - PDFs are named: `name_sport_position.pdf`
+
+6. **Generate new batch (clear old ones first):**
+   ```bash
+   curl -X DELETE http://localhost:8000/clear
+   # Then update data/input.json and regenerate
+   curl -X POST http://localhost:8000/generate
+   ```
+
+## Troubleshooting
+
+### "Module not found" error
+
+- Ensure virtual environment is activated: You should see `(venv)` in terminal
+- Reinstall dependencies: `pip install -r requirements.txt`
+
+### Port 8000 already in use
+
+- Stop the current server with `Ctrl+C`
+- Or use a different port: `uvicorn app.main:app --reload --port 8001`
+
+### Certificate not generating
+
+- Check `data/input.json` format (must have "name", "position", "sport", "date" fields)
+- Ensure template files exist:
+  - `templates/certificate_base.png`
+  - `templates/GreatVibes-Regular.ttf`
+
+### No output folder
+
+- The `output/` folder is created automatically when you generate certificates
+- If it doesn't exist or is empty, ensure you called the `/generate` endpoint

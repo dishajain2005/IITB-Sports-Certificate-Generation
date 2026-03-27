@@ -1,8 +1,21 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
+import shutil
 
 TEMPLATE_PATH = "templates/certificate_base.png"
 OUTPUT_DIR = "output"
+
+
+# 🔹 Function to clear all outputs
+def clear_output_directory():
+    """Delete all contents in the output directory"""
+    if os.path.exists(OUTPUT_DIR):
+        shutil.rmtree(OUTPUT_DIR)
+        os.makedirs(OUTPUT_DIR)
+        return {"status": "success", "message": "Output directory cleared"}
+    else:
+        os.makedirs(OUTPUT_DIR)
+        return {"status": "info", "message": "Output directory created"}
 
 
 # 🔹 Helper function for name formatting
@@ -54,9 +67,16 @@ def generate_certificate(data):
     draw.text((420, 290), data["sport"], fill="black", font=font_medium)
     draw.text((240, 320), data["date"], fill="black", font=font_medium)
 
-    # 🔹 Keep original full name for filename (important)
-    filename = data["name"].replace(" ", "_")
-    output_path = f"{OUTPUT_DIR}/{filename}.pdf"
+    # 🔹 CREATE SPORT-SPECIFIC FOLDER
+    sport = data["sport"].replace(" ", "_")
+    sport_dir = os.path.join(OUTPUT_DIR, sport)
+    os.makedirs(sport_dir, exist_ok=True)
+
+    # 🔹 GENERATE FILENAME: name_sport_position.pdf
+    name = data["name"].replace(" ", "_")
+    position = data["position"].replace(" ", "_")
+    filename = f"{name}_{sport}_{position}.pdf"
+    output_path = os.path.join(sport_dir, filename)
 
     img.save(output_path, "PDF")
 

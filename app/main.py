@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import json
-from app.generator import generate_certificate
+from app.generator import generate_certificate, clear_output_directory
 
 app = FastAPI()
 
@@ -30,7 +30,14 @@ def generate_all():
         path = generate_certificate(entry)
         results.append({
             "name": entry["name"],
+            "sport": entry["sport"],
+            "position": entry["position"],
             "file": path
         })
 
     return {"generated": results}
+
+
+@app.delete("/clear")
+def clear_outputs():
+    return clear_output_directory()
