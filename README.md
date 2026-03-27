@@ -58,7 +58,37 @@ This installs:
 
 ## Run server
 
-### Step 5: Start the FastAPI Development Server
+### Option A: Using Command Line (Recommended for Quick Generation)
+
+**Generate certificates directly without starting a server:**
+
+```bash
+python generate.py
+```
+
+**Clear all certificates:**
+
+```bash
+python generate.py --clear
+```
+
+**Clear and regenerate in one command:**
+
+```bash
+python generate.py --clear-gen
+```
+
+**View help:**
+
+```bash
+python generate.py --help
+```
+
+### Option B: Using FastAPI Server
+
+If you need to use the API endpoints (e.g., for frontend integration):
+
+#### Step 5: Start the FastAPI Development Server
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -73,17 +103,19 @@ INFO:     Application startup complete
 
 The API is now running on `http://localhost:8000`
 
-### Step 6: Stop the Server
+#### Step 6: Stop the Server
 
 Press `Ctrl+C` in the terminal to stop the server.
 
-### Step 7: Deactivate Virtual Environment (when done)
+#### Step 7: Deactivate Virtual Environment (when done)
 
 ```bash
 deactivate
 ```
 
-## API Endpoints
+## API Endpoints (Optional - for Frontend Integration)
+
+The API is available if you run the FastAPI server. It's not needed if you're just using `python generate.py`.
 
 - `GET /` - Health check
 - `GET /certificates` - Retrieve all certificates from data source
@@ -159,11 +191,47 @@ Input data format (`data/input.json`):
 ## Workflow
 
 1. Add certificate data to `data/input.json`
-2. Call `POST /generate` to create certificates organized by sport
+2. Run `python generate.py` to create certificates organized by sport
 3. Certificates are saved in `output/[Sport]/name_sport_position.pdf`
-4. Call `DELETE /clear` to remove all generated certificates and start fresh
+4. Run `python generate.py --clear` to remove all generated certificates and start fresh
+
+## Quick Start (Fastest Way)
+
+After completing setup (venv + dependencies):
+
+```bash
+# Generate certificates in one command
+python generate.py
+
+# Output appears in output/ folder organized by sport
+```
+
+That's it! Check the `output/` folder to see your generated PDFs organized by sport.
 
 ## Complete Example Workflow
+
+### Using Command Line (Simpler)
+
+1. **Prepare data:**
+   - Edit `data/input.json` with certificate information
+
+2. **Generate certificates:**
+
+   ```bash
+   python generate.py
+   ```
+
+3. **Find generated files:**
+   - Navigate to `output/` folder
+   - Check subdirectories like `Basketball/`, `Swimming/`, etc.
+   - PDFs are named: `name_sport_position.pdf`
+
+4. **Generate new batch:**
+   ```bash
+   python generate.py --clear-gen
+   ```
+
+### Using API (For Frontend Integration)
 
 1. **Prepare data:**
    - Edit `data/input.json` with certificate information
