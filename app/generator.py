@@ -2,82 +2,87 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 import shutil
 
+# ─── PATHS ─────────────────────────────────────────────────────────────
 TEMPLATE_PATH = "templates/certificate_base.png"
-OUTPUT_DIR = "output"
+OUTPUT_DIR    = "output"
+
+# ─── FONT ──────────────────────────────────────────────────────────────
+FONT_PATH1 = "templates/GreatVibes-Regular.ttf"
+#FONT_PATH1 = "templates/GreatVibes-Regular.ttf"  # ← change this
+FONT_PATH2 = "templates/GreatVibes-Regular.ttf"  # ← change this
+# ─── ZONES (Figma → Pixel converted, scaled ×1.5) ──────────────────────
+ZONES = {
+    "name":        (144, 741, 305, 44, 18),
+    "position":    (255, 309, 342, 24, 10),
+    "event":       (421, 740, 342, 26, 10),
+    "start_date":  (314, 516, 369, 22, 10),
+    "end_date":    (538, 740, 369, 22, 10),
+}
+
+INK = (25, 15, 5)
 
 
-# 🔹 Function to clear all outputs
+# ─── HELPERS ───────────────────────────────────────────────────────────
+
 def clear_output_directory():
-    """Delete all contents in the output directory"""
     if os.path.exists(OUTPUT_DIR):
         shutil.rmtree(OUTPUT_DIR)
-        os.makedirs(OUTPUT_DIR)
-        return {"status": "success", "message": "Output directory cleared"}
+    os.makedirs(OUTPUT_DIR)
+    return {"status": "success", "message": "Output directory cleared"}
+
+
+def _fit_font(draw, text, font_path, max_width, size_max, size_min):
+    for size in range(size_max, size_min - 1, -1):
+        font = ImageFont.truetype(font_path, size)
+        bbox = draw.textbbox((0, 0), text, font=font)
+        if bbox[2] - bbox[0] <= max_width:
+            return font
+    return ImageFont.truetype(font_path, size_min)
+
+
+def _draw_field(draw, text, zone_key):
+    x1, x2, y_baseline, size_max, size_min = ZONES[zone_key]
+
+    # 👇 choose font based on field
+    if zone_key == "name":
+        font_path = FONT_PATH1
     else:
-        os.makedirs(OUTPUT_DIR)
-        return {"status": "info", "message": "Output directory created"}
+        font_path = FONT_PATH2
+
+    font = _fit_font(draw, text, font_path, x2 - x1, size_max, size_min)
+
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+
+    # Horizontal centering
+    x = x1 + (x2 - x1 - text_w) // 2
+
+    # Baseline alignment + tweak
+    ascent, descent = font.getmetrics()
+    y = y_baseline - ascent - 10
+
+    draw.text((x, y), text, fill=INK, font=font)
 
 
-# 🔹 Helper function for name formatting
-def format_name(name, max_length=13):
-    name = name.strip()
-    parts = name.split()
-
-    # If already short, keep as is
-    if len(name) <= max_length:
-        return name
-
-    # Always keep first name
-    first_name = parts[0]
-
-    # If only one word
-    if len(parts) == 1:
-        return first_name
-
-    # Build initials (S. K. ...)
-    initials = ""
-    for part in parts[1:]:
-        initials += f" {part[0]}."
-
-    short_name = first_name + initials
-
-    # If still too long, reduce to just first + first initial
-    if len(short_name) > max_length:
-        short_name = f"{first_name} {parts[1][0]}."
-
-    return short_name
-
+# ─── MAIN ──────────────────────────────────────────────────────────────
 
 def generate_certificate(data):
     img = Image.open(TEMPLATE_PATH)
     draw = ImageDraw.Draw(img)
 
-    # Load font
-    font_path = "templates/GreatVibes-Regular.ttf"
-    font_large = ImageFont.truetype(font_path, 50)
-    font_medium = ImageFont.truetype(font_path, 35)
-    font_small = ImageFont.truetype(font_path, 25)
+    _draw_field(draw, data["name"], "name")
+    _draw_field(draw, data["position"], "position")
+    _draw_field(draw, data["event"], "event")
+    _draw_field(draw, data["start_date"], "start_date")
+    _draw_field(draw, data["end_date"], "end_date")
 
-    # 🔹 APPLY NAME TRUNCATION LOGIC
-    display_name = format_name(data["name"], max_length=20)
+    safe = lambda s: s.replace(" ", "_")
 
-    # Draw text (your original positions preserved)
-    draw.text((355, 260), display_name, fill="black", font=font_medium)
-    draw.text((80, 290), data["position"], fill="black", font=font_medium)
-    draw.text((420, 290), data["sport"], fill="black", font=font_medium)
-    draw.text((240, 320), data["date"], fill="black", font=font_medium)
-
-    # 🔹 CREATE SPORT-SPECIFIC FOLDER
-    sport = data["sport"].replace(" ", "_")
-    sport_dir = os.path.join(OUTPUT_DIR, sport)
+    sport_dir = os.path.join(OUTPUT_DIR, safe(data["event"]))
     os.makedirs(sport_dir, exist_ok=True)
 
-    # 🔹 GENERATE FILENAME: name_sport_position.pdf
-    name = data["name"].replace(" ", "_")
-    position = data["position"].replace(" ", "_")
-    filename = f"{name}_{sport}_{position}.pdf"
+    filename = f"{safe(data['name'])}_{safe(data['event'])}_{safe(data['position'])}.pdf"
     output_path = os.path.join(sport_dir, filename)
 
     img.save(output_path, "PDF")
-
     return output_path
